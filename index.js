@@ -177,14 +177,14 @@ gelfServer.prototype._handleGzipData = function(msg, r, chunked, chunks) {
             });
 }
 
-gelfServer.prototype._handleUncompressedData = function(msg, r, chunked, chunks) {
+gelfServer.prototype._handleUncompressedData = function(msg, r) {
     var self = this;
     self.emit('message', 
             {
-            'data': self._decodeMsg(msg.slice(2).toString('utf-8')),
+            'data': self._decodeMsg(msg.toString('utf-8')),
             'compression': 'NONE',
-            'chunked': (chunked ? true : false), 
-            'chunks': (chunked && chunks ? chunks : 1),
+            'chunked': false, 
+            'chunks': false,
             'sender': r.address 
             });
 }
@@ -196,10 +196,8 @@ gelfServer.prototype._handleMessage = function(msg, r, chunked, chunks) {
         this._handleGzipData(msg, r, chunked, chunks);
     } else if(msg[0] == 0x1e && msg[1] == 0x0f) { // Chunked message
         this._handleChunkedData(msg,r, chunked, chunks);
-    } else if(msg[0] == 0x1f && msg[1] == 0x3c) { //Uncompressed
-        this._handleUncompressedData(msg, r, chunked, chunks);
-    } else {
-        this._notifyBadMsg("Invalid magic number", msg, r);
+    } else { //Uncompressed
+        this._handleUncompressedData(msg, r);
     }
 }
 
